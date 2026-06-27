@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-text">
+    <h1 class="hero-title">جستجوی هوشمند</h1>
+    <p class="hero-sub">سوال پشتیبانی بپرسید یا محصول مورد نظرتان را جستجو کنید</p>
+  </div>
+
+  <form method="post" class="search-form" autocomplete="off">
+    {% csrf_token %}
+    <div class="search-bar">
+      <input
+        name="query"
+        class="search-input"
+        placeholder="مثلاً: «لپ تاپ ایسوس» یا «نحوه پرداخت اقساط»"
+        value="{{ query }}"
+        required
+        dir="auto"
+      />
+      <button type="submit" class="search-btn">
+        <span class="search-btn-icon">🔍</span>
+        <span>جستجو</span>
+      </button>
+    </div>
+    <div class="search-hints">
+      <span class="hint-tag hint-tag--faq">💬 سوال پشتیبانی</span>
+      <span class="hint-tag hint-tag--product">🛍️ جستجوی محصول</span>
+    </div>
+  </form>
+</section>
+
+{% if response %}
+  <section class="results-section">
+
+    {# Result status bar #}
+    {% if response.message %}
+      <div class="status-bar
+        {% if response.type == 'faq' %}status-bar--faq{% else %}status-bar--product{% endif %}">
+        {% if response.type == 'faq' %}💬{% else %}🛍️{% endif %}
+        {{ response.message }}
+      </div>
+    {% endif %}
+
+
+    {% if response.type == "faq" %}
+
+      {% if response.answer %}
+        <div class="faq-card">
+          <div class="faq-card__header">
+            <span class="faq-card__icon">💡</span>
+            <h2 class="faq-card__title">پاسخ</h2>
+          </div>
+          <div class="faq-card__body">
+            <p class="faq-card__answer">{{ response.answer }}</p>
+          </div>
+        </div>
+
+        {# Collapsible source entries #}
+        {% if response.sources %}
+          <details class="sources-details">
+            <summary class="sources-summary">
+              مشاهده منابع ({{ response.sources|length }} مورد از سوالات متداول)
+            </summary>
+            <div class="sources-list">
+              {% for src in response.sources %}
+                <div class="source-item">
+                  {% if src.question %}
+                    <p class="source-q">❓ {{ src.question }}</p>
+                  {% endif %}
+                  {% if src.answer %}
+                    <p class="source-a">✅ {{ src.answer }}</p>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </details>
+        {% endif %}
+
+      {% else %}
+        <div class="empty-state">
+          <span class="empty-state__icon">🔍</span>
+          <p>{{ response.message }}</p>
+        </div>
+      {% endif %}
+
+    {% else %}
+
+      {% if response.platforms %}
+        <div class="platforms-grid">
+          {% for plat in response.platforms %}
+            <div class="platform-card">
+              <div class="platform-card__header">
+                <span class="platform-badge">{{ plat.platform }}</span>
+                <span class="platform-count">{{ plat.results|length }} محصول</span>
+              </div>
+              <ul class="product-list">
+                {% for r in plat.results %}
+                  <li class="product-item">
+                    <div class="product-item__main">
+                      <a href="{{ r.url }}" target="_blank" class="product-title">
+                        {{ r.title }}
+                      </a>
+                      {% if r.price %}
+                        <div class="product-price">💰 {{ r.price }}</div>
+                      {% endif %}
+                      {% if r.description %}
+                        <div class="product-description">{{ r.description }}</div>
+                      {% endif %}
+                      <div class="product-meta">
+                        <a href="{{ r.url }}" target="_blank" class="product-link-btn">
+                          مشاهده ↗
+                        </a>
+                      </div>
+                    </div>
+                  </li>
+                {% empty %}
+                  <li class="product-item product-item--empty">نتیجه‌ای برگردانده نشد.</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="empty-state">
+          <span class="empty-state__icon">📦</span>
+          <p>{{ response.message|default:"محصولی برای جستجوی شما یافت نشد." }}</p>
+        </div>
+      {% endif %}
+
+    {% endif %}
+    {# end response.type branch #}
+
+  </section>
+
+{% else %}
+  <section class="all-products-section">
+    <h2 class="section-title">همه محصولات</h2>
+
+    {% if all_products %}
+      <div class="table-wrap">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>پلتفرم</th>
+              <th>عنوان</th>
+              <th>قیمت</th>
+              <th>توضیحات</th>
+              <th>لینک</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in all_products %}
+              <tr>
+                <td>
+                  <span class="platform-pill">{{ product.platform }}</span>
+                </td>
+                <td class="product-name-cell">{{ product.title }}</td>
+                <td class="price-cell">{{ product.price }}</td>
+                <td class="desc-cell">{{ product.description }}</td>
+                <td>
+                  <a href="{{ product.url }}" target="_blank" class="table-link-btn">
+                    مشاهده
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-state__icon">🗄️</span>
+        <p>هیچ محصولی در پایگاه داده موجود نیست.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endif %}
+
+{% endblock %}

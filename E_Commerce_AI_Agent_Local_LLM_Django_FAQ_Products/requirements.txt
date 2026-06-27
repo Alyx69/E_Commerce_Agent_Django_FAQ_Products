@@ -1,0 +1,9 @@
+python-dotenv
+django
+daphne
+mcp
+langchain
+langchain-openai
+langchain-mcp-adapters
+langgraph
+pydantic
